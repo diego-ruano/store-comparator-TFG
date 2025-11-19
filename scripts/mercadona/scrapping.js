@@ -1,13 +1,15 @@
 import { chromium } from "playwright";
-import fs from "fs";
+import * as fs from "fs/promises";
 
-(async () => {
-  const browser = await chromium.launch({ headless: false });
+const scrapping = async () => {
+  await fs.rm('./scripts/mercadona/productos_mercadona.json', { force: true }).catch(() => { })
+  const results = [];
+  const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 
   try {
     await page.goto("https://mercadona.es");
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
 
     const botonesCookies = page.locator("div.cookie-banner button");
     if ((await botonesCookies.count()) > 2) {
@@ -42,20 +44,14 @@ import fs from "fs";
         await boton.click();
         await page.waitForTimeout(1500);
 
-        await page.waitForTimeout(1000);
-
         const subelementos = categoria.locator("ul li");
         const cantidadSub = await subelementos.count();
-
-        if (cantidadSub === 0) {
-          continue;
-        }
+        if (cantidadSub === 0) continue;
 
         for (let j = 0; j < cantidadSub; j++) {
           try {
             const sub = subelementos.nth(j);
             const subBoton = sub.locator("button, span, a").first();
-
             await subBoton.hover();
             await page.waitForTimeout(2000);
 
@@ -71,19 +67,26 @@ import fs from "fs";
 
                 if (ariaLabel) {
                   const partes = ariaLabel.split(", ");
+                  const imgUrl = await producto.locator('img').getAttribute('src');
 
-                  if (partes.length >= 3) {
-                    const nombre = partes[0];
-                    const formato = partes[1];
-                    const precio = partes[2].replace(" por Unidad", "");
-
-                    fs.appendFileSync(
-                      "productos.txt",
-                      `${nombre} | ${formato} | ${precio}\n`
+                  if (partes.length >= 4) {
+                    const price = parseFloat(
+                      partes[3].replace(",", ".").replace("€", "").trim()
                     );
+
+                    const temporalObject = {
+                      name: partes[0].trim(),
+                      url_image: imgUrl,
+                      price,
+                      retailer: 'Mercadona',
+                    };
+                    if (temporalObject.name != null && temporalObject.url_image != null && temporalObject.price != null) {
+                      results.push(temporalObject);
+                    }
                   }
                 }
-              } catch (error) {}
+              } catch (error) {
+              }
             }
 
             await page.waitForTimeout(500);
@@ -97,8 +100,18 @@ import fs from "fs";
         continue;
       }
     }
+
+    await fs.writeFile(
+      './scripts/mercadona/productos_mercadona.json',
+      JSON.stringify(results, null, 2),
+      'utf-8'
+    );
+
   } catch (error) {
+    console.error(error);
   } finally {
     await browser.close();
   }
-})();
+};
+
+export default scrapping;

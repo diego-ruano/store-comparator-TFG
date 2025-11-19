@@ -41,7 +41,7 @@ export async function getUrlsFromSitemap(browser) {
         console.log(`No se puede procesar el sidemap ${link}`);
       }
     }
-    fs.writeFileSync("urls_productos.txt", allProductUrls.join("\n"), "utf-8");
+    fs.writeFileSync("./scripts/Carrefour/urls_productos.txt", allProductUrls.join("\n"), "utf-8");
     await page.close();
     return allProductUrls;
   } catch (error) {

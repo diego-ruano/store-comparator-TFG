@@ -1,0 +1,26 @@
+[
+	{
+		"name": "Paletilla de cordero recental Carrefour El Mercado 950 g aprox",
+		"price": 24.60,
+		"url_image": "https://static.carrefour.es/hd_510x_/img_pim_food/397664_00_1.jpg",
+		"retailer": "Carrefour"
+	},
+	{
+		"name": "Nuez pecana natural Original Carrefour 200 g.",
+		"price": 3.89,
+		"url_image": "https://static.carrefour.es/hd_510x_/img_pim_food/615039_00_1.jpg",
+		"retailer": "Carrefour"
+	},
+	{
+		"name": "Café Colombia en cápsulas L'or Espresso compatible con Nespresso 40 unidades de 5,2 g.",
+		"price": 15.79,
+		"url_image": "https://static.carrefour.es/hd_510x_/img_pim_food/486809_00_1.jpg",
+		"retailer": "Carrefour"
+	},
+	{
+		"name": "Maquinillas desechables Flex 3 Bic 4 ud.",
+		"price": 6.35,
+		"url_image": "https://static.carrefour.es/hd_510x_/img_pim_food/171210_00_1.jpg",
+		"retailer": "Carrefour"
+	}
+]
