@@ -1,9 +1,17 @@
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '..', '.env') });
+
 import { spawn } from 'child_process';
 import * as fs from 'fs/promises';
-import { prisma } from '../lib/prisma.js';
+import { db, closeDb } from '../lib/db.js';
 
-const filePathCarrefour = './scripts/carrefour/productos_carrefour.json';
-const filePathMercadona = './scripts/mercadona/productos_mercadona.json';
+const filePathCarrefour = join(__dirname, 'carrefour', 'productos_carrefour.json');
+const filePathMercadona = join(__dirname, 'mercadona', 'productos_mercadona.json');
 
 function runScript(path) {
 	return new Promise((resolve, reject) => {
@@ -26,10 +34,20 @@ async function waitForFile(path, timeout = 120000) {
 	}
 }
 
+async function insertProducts(products) {
+	const tx = await db.batch(
+		products.map(p => ({
+			sql: 'INSERT INTO products (name, price, url_image, retailer) VALUES (?, ?, ?, ?)',
+			args: [p.name, p.price, p.url_image, p.retailer]
+		}))
+	);
+	return products.length;
+}
+
 try {
 	await Promise.all([
-		runScript('./scripts/mercadona/scrapping.js'),
-		runScript('./scripts/carrefour/scrapping.js')
+		runScript(join(__dirname, 'mercadona', 'scrapping.js')),
+		runScript(join(__dirname, 'carrefour', 'scrapping.js'))
 	]);
 
 	await waitForFile(filePathCarrefour);
@@ -51,14 +69,14 @@ try {
 		retailer: p.retailer
 	}));
 
-	const resultCarrefour = await prisma.products.createMany({ data: dataCarrefour });
-	console.log(`Insertados ${resultCarrefour.count} productos de Carrefour`);
-	const resultMercadona = await prisma.products.createMany({ data: dataMercadona });
-	console.log(`Insertados ${resultMercadona.count} productos de Mercadona`);
+	const countCarrefour = await insertProducts(dataCarrefour);
+	console.log(`Insertados ${countCarrefour} productos de Carrefour`);
+	const countMercadona = await insertProducts(dataMercadona);
+	console.log(`Insertados ${countMercadona} productos de Mercadona`);
 
 } catch (err) {
 	console.error(err);
 } finally {
-	await prisma.$disconnect();
+	await closeDb();
 	process.exit(0);
 }

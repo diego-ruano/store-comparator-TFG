@@ -45,7 +45,7 @@ export async function getUrlsFromSitemap(browser) {
     await page.close();
     return allProductUrls;
   } catch (error) {
-    console.error("Error al procesar los sitemaps:");
+    console.error("Error al procesar los sitemaps:", error);
     await page.close();
     return [];
   }

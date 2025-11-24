@@ -33,8 +33,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "scripts/handleScrapping.js",
-    "lib/prisma.js"
+    "scripts/handleScrapping.mjs",
+    "lib/db.js"
   ],
   "exclude": [
     "node_modules"

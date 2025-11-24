@@ -1,6 +1,6 @@
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 type eventType = 'user.created' | 'user.updated' | 'user.deleted';
@@ -72,24 +72,26 @@ export async function POST(req: Request) {
 		const userData = event.data;
 
 		if (eventType === 'user.created' || eventType === 'user.updated') {
-			const existingUser = await prisma.users.findUnique({
-				where: { id: userData.id },
+			// Check if user exists
+			const result = await db.execute({
+				sql: 'SELECT id FROM users WHERE id = ?',
+				args: [userData.id]
 			});
 
-			if (!existingUser) {
-				await prisma.users.create({
-					data: {
-						id: userData.id,
-						created_at: new Date(userData.created_at),
-					},
+			if (result.rows.length === 0) {
+				// Insert new user
+				await db.execute({
+					sql: 'INSERT INTO users (id, created_at) VALUES (?, ?)',
+					args: [userData.id, new Date(userData.created_at).toISOString()]
 				});
 			}
 		}
 
 		if (eventType === 'user.deleted') {
 			try {
-				await prisma.users.delete({
-					where: { id: userData.id },
+				await db.execute({
+					sql: 'DELETE FROM users WHERE id = ?',
+					args: [userData.id]
 				});
 			} catch (error) {
 				console.log(`Intento de borrar usuario ${userData.id} que no existía.`);

@@ -80,7 +80,7 @@ const scrapping = async () => {
                       price,
                       retailer: 'Mercadona',
                     };
-                    if (temporalObject.name != null && temporalObject.url_image != null && temporalObject.price != null) {
+                    if (temporalObject.name != null && temporalObject.url_image != null && !isNaN(temporalObject.price)) {
                       results.push(temporalObject);
                     }
                   }
@@ -114,4 +114,5 @@ const scrapping = async () => {
   }
 };
 
+await scrapping();
 export default scrapping;

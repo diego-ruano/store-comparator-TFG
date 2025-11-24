@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -10,17 +10,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ products: [] });
     }
 
-    const result = await prisma.products.findMany({
-      where: {
-        name: {
-          contains: searchTerm,
-        },
-      },
-      take: 10
+    const result = await db.execute({
+      sql: 'SELECT * FROM products WHERE name LIKE ? LIMIT 10',
+      args: [`%${searchTerm}%`]
     });
 
     return NextResponse.json({
-      result
+      result: result.rows
     });
 
   } catch (error) {
