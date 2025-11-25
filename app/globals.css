@@ -6,3 +6,8 @@ html, body{
   box-sizing: border-box;
   overflow-x: hidden;
 }
+
+@theme {
+  --color-mercadona: #00ab61;
+  --color-carrefour: #0970e6;
+}

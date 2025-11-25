@@ -6,28 +6,26 @@ import { NextResponse } from 'next/server';
 type eventType = 'user.created' | 'user.updated' | 'user.deleted';
 
 interface ClerkUserEvent {
-	data: Record<string, any>
+	data: Record<string, unknown>
 	type: eventType
 	object: 'event'
 }
 
 export async function POST(req: Request) {
-	console.log('Recibiendo el wekhook de clerk')
+	// Conseguir y comprobar el webhook secret
 	const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
-
 	if (!WEBHOOK_SECRET) {
-		console.error('CLERK_WEBHOOK_SECRET no está configurado');
 		return NextResponse.json(
 			{ error: 'Webhook secret no configurado' },
 			{ status: 500 }
 		);
 	}
 
+	// Conseguir y comprobar los headers de svix
 	const headerPayload = await headers();
 	const svix_id = headerPayload.get('svix-id');
 	const svix_timestamp = headerPayload.get('svix-timestamp');
 	const svix_signature = headerPayload.get('svix-signature');
-
 	if (!svix_id || !svix_timestamp || !svix_signature) {
 		return NextResponse.json(
 			{ error: 'Faltan headers de Svix' },
@@ -35,22 +33,23 @@ export async function POST(req: Request) {
 		);
 	}
 
+	// Leer la petición y parsearla a JSON
 	let payload;
 	try {
 		payload = await req.json();
-	} catch (err) {
-		console.error('Error parseando JSON:', err);
+	} catch {
 		return NextResponse.json(
 			{ error: 'Cuerpo de la petición inválido' },
 			{ status: 400 }
 		);
 	}
-
 	const body = JSON.stringify(payload);
 
+	// Crear el webhook y el evento
 	const wh = new Webhook(WEBHOOK_SECRET);
 	let event: ClerkUserEvent;
 
+	// Verificar que el webhook es válido
 	try {
 		event = wh.verify(body, {
 			'svix-id': svix_id,
@@ -68,33 +67,33 @@ export async function POST(req: Request) {
 	const eventType = event.type;
 
 	try {
-		const eventType = event.type;
 		const userData = event.data;
 
+		// Si hay alguno de estos eventos comprueba si el usuario existe
 		if (eventType === 'user.created' || eventType === 'user.updated') {
-			// Check if user exists
 			const result = await db.execute({
 				sql: 'SELECT id FROM users WHERE id = ?',
-				args: [userData.id]
+				args: [userData.id as string]
 			});
 
+			// Si no existe el usuario lo crea
 			if (result.rows.length === 0) {
-				// Insert new user
 				await db.execute({
 					sql: 'INSERT INTO users (id, created_at) VALUES (?, ?)',
-					args: [userData.id, new Date(userData.created_at).toISOString()]
+					args: [userData.id as string, new Date(userData.created_at as number).toISOString()]
 				});
 			}
 		}
 
+		// Borrar el usuario si el evento es user.deleted
 		if (eventType === 'user.deleted') {
 			try {
 				await db.execute({
 					sql: 'DELETE FROM users WHERE id = ?',
-					args: [userData.id]
+					args: [userData.id as string]
 				});
-			} catch (error) {
-				console.log(`Intento de borrar usuario ${userData.id} que no existía.`);
+			} catch {
+				console.log(`Intento de borrar usuario ${userData.id as string} que no existía.`);
 			}
 		}
 
