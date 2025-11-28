@@ -1,5 +1,6 @@
 // Aquí va la landing page
 import { UserButton } from "@clerk/nextjs";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
       <UserButton />
       <div className="flex flex-col items-center gap-6 p-10">
         <h1 className="text-3xl font-bold">Mi Aplicación</h1>
+        <Link href="/dashboard" className='border-2 rounded-2xl px-4 py-2'>Ir al dashboard</Link>
       </div>
     </>
   );

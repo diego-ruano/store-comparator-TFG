@@ -18,7 +18,21 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: "Falta el ID del producto" }, { status: 400 });
 		}
 
-		userId = 'user_2g7np7Hrk0SN6kj5EDMLDaKNL0S'
+		// Comprobación de si el usuario existe en la base de datos (para desarollo local, sin ngrok o similares no funcionan los webhooks)
+		const userCheck = await db.execute({
+			sql: "SELECT id FROM users WHERE id = ?",
+			args: [userId]
+		});
+
+		if (userCheck.rows.length === 0) {
+			console.log(`Usuario ${userId} no encontrado en BD. Creándolo automáticamente...`);
+
+			await db.execute({
+				sql: "INSERT INTO users (id, created_at) VALUES (?, ?)",
+				args: [userId, new Date().toISOString()]
+			});
+		}
+
 		// Comprobamos si hay un carrito a nombre del usuario
 		const cartCheck = await db.execute({
 			sql: "SELECT id FROM carts WHERE user_id = ? LIMIT 1",

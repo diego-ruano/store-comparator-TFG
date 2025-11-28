@@ -34,15 +34,15 @@ export default function Dashboard() {
 	}, [searchTerm]);
 
 	return (
-		<div className="p-4 max-w-5xl mx-auto pt-32">
-			<header className="fixed top-18 left-0 right-0 z-40 bg-white py-4">
-				<div className="max-w-5xl mx-auto px-4">
-					<div className="flex items-center w-full md:w-auto gap-4 justify-center">
-						<div className="flex justify-between items-center px-4 py-2 rounded-2xl border w-full md:w-96 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 bg-white">
+		<div className="max-w-5xl mx-auto">
+			<header className="fixed top-12 left-0 right-0 z-40 bg-blue-200 py-4">
+				<div className="max-w-5xl mx-auto px-3">
+					<div className="flex items-center w-full md:w-auto justify-center">
+						<div className="flex items-center px-4 py-2 w-full md:w-96 bg-white">
 							<input
 								type="text"
 								placeholder="Buscar productos..."
-								className="w-full focus:outline-none bg-white"
+								className="w-full outline-none bg-white"
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
 							/>
@@ -58,15 +58,15 @@ export default function Dashboard() {
 				</div>
 			</header>
 
-
+			{/* Contenido debajo del buscador fijo */}
 			<section className="w-full flex flex-col gap-4 mt-6">
 				{searchTerm && !isLoading && products.length === 0 && (
 					<p className="text-center text-gray-500">No se encontraron productos.</p>
 				)}
 
 				{products.map((product) => (
-					<div key={product.id} className="w-full flex border border-gray-200 rounded-2xl py-1.5 shadow-sm hover:shadow-md transition-shadow bg-white">
-						<div className="w-4/10 shrink-0 bg-white rounded-xl">
+					<div key={product.id} className="w-full flex border border-gray-200 py-1.5 shadow-sm hover:shadow-md transition-shadow bg-white">
+						<div className="w-3/10 shrink-0 bg-white rounded-xl">
 							{product.url_image ? (
 								<img src={product.url_image} alt={product.name} className="w-full h-full object-contain" />
 							) : (
@@ -74,26 +74,26 @@ export default function Dashboard() {
 							)}
 						</div>
 
-						<div className="flex-1 flex flex-col justify-between py-1 px-2">
-							<div className="flex justify-between items-start">
+						<div className="flex flex-col justify-between px-2 py-1 gap-1">
+							<div className="flex justify-between items-center">
 								<span className="bg-blue-600 text-white text-xs font-bold uppercase rounded-full px-3 py-1">
 									{product.retailer}
 								</span>
-								<span className="text-xl font-bold text-gray-900">
+								<span className="text-lg font-bold text-gray-900">
 									{product.price} €
 								</span>
 							</div>
 
-							<h3 className="text-lg font-medium text-gray-800 line-clamp-2 mt-2">
+							<h3 className="font-medium text-gray-800 line-clamp-2 mt-2">
 								{product.name}
 							</h3>
 
-							<div className="mt-auto pt-2 flex justify-end">
+							<div className="mt-auto mr-auto pt-2 text-sm">
 								<button
-									className="px-5 py-2 bg-black text-white rounded-xl flex items-center gap-2 hover:bg-gray-800 transition-colors"
+									className="px-3 py-1 bg-black text-white rounded-xl flex items-center gap-2 hover:bg-gray-800 transition-colors"
 									onClick={() => handleAddButtonClick(product.id)}
 								>
-									<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+									<svg className='size-4' viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
 										<circle cx="9" cy="21" r="1"></circle>
 										<circle cx="20" cy="21" r="1"></circle>
 										<path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -113,12 +113,13 @@ export default function Dashboard() {
 			method: "POST",
 			body: JSON.stringify({ productId: idProduct }),
 		});
+		const data = await response.json();
 
 		if (!response.ok) {
+			console.error(data);
 			throw new Error("Error al añadir al carrito");
 		}
 
-		const data = await response.json();
 		if (data.success) {
 			alert("Producto añadido al carrito");
 		}
