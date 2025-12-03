@@ -15,3 +15,5 @@ export type Product = {
 	url_image: string;
 	retailer: string;
 }
+
+export type SortOrder = 'asc' | 'desc' | null;
