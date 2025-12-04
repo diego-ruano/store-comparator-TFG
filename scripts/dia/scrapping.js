@@ -1,6 +1,5 @@
 import { chromium } from "playwright";
 import * as fs from "fs/promises";
-import * as path from "path";
 
 export const scrapping = async () => {
 	const outputFile = './scripts/dia/productos_dia.json';
@@ -8,7 +7,7 @@ export const scrapping = async () => {
 
 	const results = [];
 
-	const browser = await chromium.launch({ headless: true });
+	const browser = await chromium.launch({ headless: false, slowMo: 1000 });
 	const context = await browser.newContext({
 		userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
 		locale: "es-ES",
@@ -19,7 +18,6 @@ export const scrapping = async () => {
 		// Leer urls
 		const urlsFile = './scripts/dia/urls_productos.txt';
 		const data = (await fs.readFile(urlsFile, 'utf-8')).split('\n');
-		console.log(data)
 
 		// Iterar
 		for (let i = 0; i < data.length; i++) {
@@ -28,44 +26,51 @@ export const scrapping = async () => {
 
 			try {
 				await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+				const localizadorRechazarCookies = await page.locator('#onetrust-reject-all-handler')
 
-
-				// lógica y comprobación de que no esté agotado el producto
-				const buyButton = page.locator('button[data-test-id="add-button"], button.add-to-cart-button');
-				const isDisabled = await buyButton.isDisabled().catch(() => true);
-				const buttonText = await buyButton.textContent().catch(() => "");
-
-				if (isDisabled || buttonText.toLowerCase().includes('agotado')) {
-					continue;
+				if (localizadorRechazarCookies.isVisible()) {
+					localizadorRechazarCookies.click()
 				}
 
+				// lógica y comprobación de que no esté agotado el producto
+				const localizadorBotonAgotado = page.locator('[data-test-id="add2cart-basic-button"]')
+				const texto = await localizadorBotonAgotado.innerText()
+				console.log(localizadorBotonAgotado)
+				console.log(texto)
 
-				const nameSelector = page.locator('h1, [data-test-id="product-title"]');
-				let name = await nameSelector.first().innerText().catch(() => null);
+				// Aquí hay que comprobar que los selectores estén bien puestos
+				const nombre = await page.locator('.product-title').innerText().catch()
+				const precio = await page.locator('.buy-box__active-price').innerText().catch()
+				const url_imagen = await page.locator('.product-image').first().getAttribute('src').catch()
+				console.log({
+					comentario: 'mostrando datos',
+					nombre: nombre,
+					precio: precio,
+					url_imagen: url_imagen
+				})
 
-				const priceSelector = page.locator('[data-test-id="price-container"] .price, .product-price');
-				let priceText = await priceSelector.first().innerText().catch(() => null);
-
-				const imageSelector = page.locator('img[data-test-id="product-image"], .product-image img');
-				let imageUrl = await imageSelector.first().getAttribute('src').catch(() => null);
-
+				// Los src son rutas relativas así añadimos lo necesario para poder encontrarlas
+				if (!url_imagen.startsWith('http')) {
+					url_imagen = `www.dia.es${url_imagen}`
+					console.log(url_imagen)
+				}
 
 				// Si tenemos todo que hace falta, optimizamos el formato del precio
-				if (name && priceText && imageUrl) {
-					let priceClean = priceText
+				if (nombre && precio && url_imagen) {
+					let precioFormateado = precio
 						.replace('€', '')
 						.replace(',', '.')
 						.trim();
 
-					let price = parseFloat(priceClean);
+					let precioFinal = parseFloat(precioFormateado);
 
-					const temporalObject = {
-						name: name.trim(),
-						url_image: imageUrl.startsWith('http') ? imageUrl : `https://www.dia.es${imageUrl}`, // Asegurar URL absoluta
-						price: price,
+					const objetoTemporal = {
+						nombre: nombre.trim(),
+						url_image: url_imagen,
+						precio: precioFinal,
 						retailer: 'Dia'
 					};
-					console.log(temporalObject)
+					console.log(objetoTemporal)
 
 					// validamos que todo esté correcto
 					if (temporalObject.name && !isNaN(temporalObject.price) && temporalObject.url_image) {
@@ -75,6 +80,7 @@ export const scrapping = async () => {
 
 			} catch (error) {
 			}
+			console.log(results)
 		}
 
 		// guardado de los resultados
